@@ -1,4 +1,5 @@
 var express = require('express');
+//J: used to simplify file paths, core module indicated by absence of './'
 var path = require('path');
 var cookieParser = require('cookie-parser');
 
@@ -21,12 +22,22 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 // Set up Session on req if available
+//J: If... they have a cookie that is of name CHSAuth,
+//J:    and we have a session with that cookie as the key
+//J:    and it hasn't been 2 hours since the session has been created
+//J:    --> Attach the session to the user's req (req.session)
+//J: Else... req.session == undefined
 app.use(Session.router);
 
 // Check general login.  If OK, add Validator to |req| and continue processing,
 // otherwise respond immediately with 401 and noLogin error tag.
 app.use(function(req, res, next) {
+  //J: This just prints the requested path, i.e. localhost:3000/PATH
    console.log(req.path);
+  //J: If... the user has a valid session,
+  //J: Or... they are POSTing AND the path === 'Prss' or "Ssns"
+  //J:    attach validator to request object; req.validator
+  //J: Else... return 401
    if (req.session || (req.method === 'POST' &&
     (req.path === '/Prss' || req.path === '/Ssns'))) {
       req.validator = new Validator(req, res);
@@ -34,11 +45,16 @@ app.use(function(req, res, next) {
    } else
       res.status(401).end();
 });
+//J: Sanity Check... What does the validator attached to req obj do?
+//J:    validator has parameters to hold errors, session, and req
+//J:    req.cnn is now holding the connection we made to mySql
 
 // Add DB connection, with smart chkQry method, to |req|
 app.use(CnnPool.router);
 
 // Load all subroutes
+//J: If any of these PATHs are provided, allow the specified
+//J:  route to handle it
 app.use('/Prss', require('./Routes/Account/Prss.js'));
 app.use('/Ssns', require('./Routes/Account/Ssns.js'));
 app.use('/Cnvs', require('./Routes/Conversation/Cnvs.js'));
@@ -46,6 +62,13 @@ app.use('/Cnvs', require('./Routes/Conversation/Cnvs.js'));
 // Special debugging route for /DB DELETE.  Clears all table contents,
 //resets all auto_increment keys to start at 1, and reinserts one admin user.
 app.delete('/DB', function(req, res) {
+  console.log("req.session = " + req.session);
+  console.log("req.session.isAdmin = " + req.session.isAdmin());
+  if(!req.session.isAdmin()){
+    res.status(403).end();
+    req.cnn && req.cnn.release();
+  }
+  else{
    // Callbacks to clear tables
    var cbs = ["Conversation", "Message", "Person"].map(function(tblName) {
       return function(cb) {
@@ -54,7 +77,7 @@ app.delete('/DB', function(req, res) {
    });
 
    // Callbacks to reset increment bases
-   cbs = cbs.concat(["Conversation", "Message", "Person"].map(function(tblName) {
+   cbs = cbs.concat(["Conversation", "Message", "Person"].map(function(tblName){
       return function(cb) {
          req.cnn.query("alter table " + tblName + " auto_increment = 1", cb);
       };
@@ -81,6 +104,7 @@ app.delete('/DB', function(req, res) {
       else
          res.status(200).end();
    });
+ }
 
    /* Equivalent expanded code for instructional reference
       async.series([
@@ -120,7 +144,7 @@ app.delete('/DB', function(req, res) {
    );*/
 });
 
-// Handler of last resort.  Print a stacktrace to console and send a 500 response.
+// Handler of last resort.  Print a stacktrace to console and send a 500 res
 app.use(function(req, res) {
    res.status(404).end();
    res.cnn.release();

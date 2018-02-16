@@ -8,19 +8,21 @@ var Validator = function(req, res) {
 
 // List of errors, and their corresponding resource string tags
 Validator.Tags = {
-   noLogin: "noLogin",              // No active session/login
-   noPermission: "noPermission",    // Login lacks permission.
-   missingField: "missingField",    // Field missing from request. Params[0] is field name
-   badValue: "badValue",            // Field has bad value.  Params[0] gives field name
-   notFound: "notFound",            // Entity not present in DB
-   badLogin: "badLogin",            // Email/password combination invalid
-   dupEmail: "dupEmail",            // Email duplicates an existing email
-   noTerms: "noTerms",              // Acceptance of terms is required.
-   forbiddenRole: "forbiddenRole",  // Cannot set to this role
-   noOldPwd: "noOldPwd",            // Change of password requires an old password
-   dupTitle: "dupTitle",            // Title duplicates an existing Conversation title
-   dupEnrollment: "dupEnrollment",  // Duplicate enrollment
-   queryFailed: "queryFailed"
+  noLogin: "noLogin",              // No active session/login
+  noPermission: "noPermission",    // Login lacks permission.
+  missingField: "missingField",    // Field missing from request. Params[0] is field name
+  badValue: "badValue",            // Field has bad value.  Params[0] gives field name
+  notFound: "notFound",            // Entity not present in DB
+  badLogin: "badLogin",            // Email/password combination invalid
+  dupEmail: "dupEmail",            // Email duplicates an existing email
+  noTerms: "noTerms",              // Acceptance of terms is required.
+  forbiddenRole: "forbiddenRole",  // Cannot set to this role
+  forbiddenField: "forbiddenField", //
+  oldPwdMismatch: "oldPwdMismatch", //
+  noOldPwd: "noOldPwd",            // Change of password requires an old password
+  dupTitle: "dupTitle",            // Title duplicates an existing Conversation title
+  dupEnrollment: "dupEnrollment",  // Duplicate enrollment
+  queryFailed: "queryFailed"
 };
 
 // Check |test|.  If false, add an error with tag and possibly empty array
@@ -38,7 +40,7 @@ Validator.Tags = {
 Validator.prototype.check = function(test, tag, params, cb) {
    if (!test)
       this.errors.push({tag: tag, params: params});
-
+  //J: Check if we have found any errors so far
    if (this.errors.length) {
       if (this.res) {
          if (this.errors[0].tag === Validator.Tags.noPermission)

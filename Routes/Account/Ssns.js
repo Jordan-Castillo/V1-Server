@@ -33,10 +33,14 @@ router.post('/', function(req, res) {
 });
 
 router.delete('/:cookie', function(req, res) {
-   if (req.validator.check(req.params.cookie === req.cookies[ssnUtil.cookieName],
+  console.log("INSIDE ROUTER.DELETE");
+  console.log("req.params.cookie = " + req.params.cookie);
+
+   if(req.validator.check(req.params.cookie === req.cookies[ssnUtil.cookieName],
     Tags.noPermission)) {
-      ssnUtil.deleteSession(req.query.cookie);
+      ssnUtil.deleteSession(req.params.cookie);
       res.status(200).end();
+      console.log("SESSUIB ");
    }
    req.cnn.release();
 });

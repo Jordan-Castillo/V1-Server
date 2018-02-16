@@ -21,7 +21,7 @@ var Session = function Session(user) {
 };
 
 Session.prototype.isAdmin = function() {
-   return this.role == 1;
+   return this.role === 1;
 };
 
 // Export a function that logs in |user| by creating an authToken and sending it back
@@ -57,6 +57,10 @@ exports.router = function(req, res, next) {
       if (sessions[req.cookies[cookieName]].lastUsed < new Date().getTime() - duration) {
          delete sessions[req.cookies[cookieName]];
       }
+      //J: if they have a cookie that is of name CHSAuth,
+      //J:  and we have a session with that cookie as the key
+      //J:  and it hasn't been 2 hours since the session has been created
+      //J: --> Attach the session to the user's req
       else {
          req.session = sessions[req.cookies[cookieName]];
       }

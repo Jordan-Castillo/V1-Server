@@ -4,26 +4,104 @@ var router = Express.Router({caseSensitive: true});
 var async = require('async');
 var mysql = require('mysql');
 
+var cnnConfig = {
+   host     : 'localhost',
+   user     : 'jtcastil',
+   password : 'Lakers1!',
+   database : 'cstaley'
+};
+
 router.baseURL = '/Prss';
 
-/*
+/* WAS ORIGINALLY BELOW  !req.session.isAdmin() && req.session.email;
+var cnnConfig = {
+host     : 'localhost',
+user     : 'jtcastil',
+password : 'Lakers1!',
+database : 'cstaley'
+};
 */
 router.get('/', function(req, res) {
-   var email = req.session.isAdmin() && req.query.email ||
-    !req.session.isAdmin() && req.session.email;
-   var cnnConfig = {
-      host     : 'localhost',
-      user     : 'cstaley',
-      password : 'CHSpw',
-      database : 'cstaley'
-   };
-
+   var isUserAdmin = req.session.isAdmin();
+   var email = req.query.email;
+   var emptyArr = [];
+//if query email and not an admin, they can only see their own email --> if the query email is a substring, or same string as their own email
    req.cnn.release();  // Since we're not using that
-
    var cnn = mysql.createConnection(cnnConfig);
 
+   if(isUserAdmin){
+     console.log("USER IS ADMIN MAKING PRSS GET");
+     console.log("req.originalUrl = " + req.originalUrl);
+     console.log("[email] = " + email);
+     if(email){
+       cnn.query('select email from Person',
+       function(err, result){
+         if(err){
+           cnn.destroy();
+           res.status(500).json("Failed query");
+         }
+         else{
+           for(var x = 0; x < result.length; x++){
+              console.log("result[" + x + "].email = " + result[x].email);
+              if(result[x].email.indexOf(email) >= 0)
+                email = result[x].email;
+            }
+            cnn.query('select id, email from Person where email LIKE ?',
+             [email], function(err, result) {
+               if (err) {
+                  cnn.destroy();
+                  res.status(500).json("Failed query");
+               }
+               else {
+                  res.status(200).json(result);
+                  cnn & cnn.destroy();
+               }
+            });
+         }
+       });
+     }
+     else{
+       cnn.query('select id, email from Person', function(err, result){
+         if(err){
+           cnn.destroy();
+           res.status(500).json("Failed query");
+         }
+         else{
+           res.status(200).json(result);
+           cnn & cnn.destroy();
+         }
+       });
+     }
+   }
+   else{
+    console.log("USER IS NOT ADMIN MAKING PRSS GET");
+    console.log("email = " + email);
+    console.log("req.originalUrl = " + req.originalUrl);
+    console.log("req.session.email = " + req.session.email);
+    console.log("indexOf Value = " + req.session.email.indexOf(email));
+     if(email && req.session.email.indexOf(email) === 0){
+       email = req.session.email;
+       cnn.query('select id, email from Person where email LIKE ?', [email],
+       function(err, result) {
+          if (err) {
+             cnn.destroy();
+             res.status(500).json("Failed query");
+          }
+          else {
+             res.status(200).json(result);
+             cnn & cnn.destroy();
+          }
+       });
+     }
+     else{ //close immediately
+       res.status(200).json(emptyArr);
+       cnn & cnn.destroy();
+     }
+   }
+
+/*
    if (email)
-      cnn.query('select id, email from Person where email = ?', [email],
+      cnn.query('select id, email from Person where email LIKE ?', [email],
       function(err, result) {
          if (err) {
             cnn.destroy();
@@ -44,32 +122,37 @@ router.get('/', function(req, res) {
             res.status(200).json(result);
          }
       });
+*/
+
+
 });
 
+/*    ORIGINALLY BELOW  var noPerm;
+var cnnConfig = {
+host     : '127.0.0.1',
+user     : 'cstaley',
+password : 'secret',
+database : 'CHSdb'
+};
+*/
 
 // Non-waterfall, non-validator, non-db automation version
+/*
 router.post('/', function(req, res) {
    var body = req.body;
    var admin = req.session && req.session.isAdmin();
    var errorList = [];
    var qry;
    var noPerm;
-   var cnnConfig = {
-      host     : '127.0.0.1',
-      user     : 'cstaley',
-      password : 'secret',
-      database : 'CHSdb'
-   };
-
    req.cnn.release();  // Since we're not using that
 
    if (admin && !body.password)
       body.password = "*";                       // Blocking password
    body.whenRegistered = new Date();
-
    // Check for fields
-   if (!body.hasOwnProperty('email'))
+   if (!body.hasOwnProperty('email') || body.email.length === 0){
       errorList.push({tag: "missingField", params: "email"});
+    }
    if (!body.hasOwnProperty('password'))
       errorList.push({tag: "missingField", params: "password"});
    if (!body.hasOwnProperty('role'))
@@ -80,15 +163,20 @@ router.post('/', function(req, res) {
       noPerm = body.role === 1 && !admin;
       if (!body.termsAccepted)
          errorList.push({tag: "noTerms"});
-      if (body.role < 0)
+      if (body.role < 0){
          errorList.push({tag: "badVal", param: "role"});
+       }
    }
 
    // Post errors, or proceed with data fetches
-   if (noPerm)
-      res.status(403).end();
-   else if (errorList.length)
-      res.status(400).json(errorList);
+   if (noPerm){
+     console.log("noPerm response");
+      res.status(403).json(errorList);
+    }
+   else if (errorList.length){
+      console.log("errorList.length response");
+      res.status(403).json(errorList);
+    }
    else {
       var cnn = mysql.createConnection(cnnConfig);
 
@@ -117,7 +205,7 @@ router.post('/', function(req, res) {
       });
    }
 });
-
+*/
 /* Much nicer versions
 router.get('/', function(req, res) {
    var email = req.session.isAdmin() && req.query.email ||
@@ -135,6 +223,7 @@ router.get('/', function(req, res) {
       req.cnn.chkQry('select id, email from Person', handler);
 });
 
+*/
 router.post('/', function(req, res) {
    var vld = req.validator;  // Shorthands
    var body = req.body;
@@ -150,6 +239,9 @@ router.post('/', function(req, res) {
       if (vld.hasFields(body, ["email", "password", "role"], cb) &&
        vld.chain(body.role === 0 || admin, Tags.noPermission)
        .chain(body.termsAccepted || admin, Tags.noTerms)
+       .chain(!(body.email.length === 0), Tags.missingField, "email")
+       .chain(!(body.lastName.length === 0), Tags.missingField, "lastName")
+       .chain(!(body.password.length === 0), Tags.missingField, "password")
        .check(body.role >= 0, Tags.badValue, ["role"], cb)) {
          cnn.chkQry('select * from Person where email = ?', body.email, cb);
       }
@@ -168,11 +260,9 @@ router.post('/', function(req, res) {
       cnn.release();
    });
 });
-*/
 
 router.get('/:id', function(req, res) {
    var vld = req.validator;
-
    if (vld.checkPrsOK(req.params.id)) {
       req.cnn.query('select * from Person where id = ?', [req.params.id],
       function(err, prsArr) {

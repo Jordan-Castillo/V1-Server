@@ -46,34 +46,33 @@ router.get('/', function(req, res) {
            res.status(500).json("Failed query");
          }
          else{
-           res.status(200).json(result);
-           cnn & cnn.destroy();
+            res.status(200).json(result);
+            cnn & cnn.destroy();
          }
        });
      }
    }
    else{
-     if (email && req.session.email.indexOf(email) === 0) {
-       email = req.session.email;
-       cnn.query('select id, email from Person where email LIKE ?', [email],
-       function(err, result) {
-          if (err) {
-             cnn.destroy();
-             res.status(500).json("Failed query");
-          }
-          else {
-             res.status(200).json(result);
-             cnn & cnn.destroy();
-          }
-       });
-     }
-     else{
-       res.status(200).json(emptyArr);
-       cnn & cnn.destroy();
-     }
+      if (email && req.session.email.indexOf(email) === 0) {
+         email = req.session.email;
+         cnn.query('select id, email from Person where email LIKE ?', [email],
+         function(err, result) {
+            if (err) {
+               cnn.destroy();
+               res.status(500).json("Failed query");
+            }
+            else {
+               res.status(200).json(result);
+               cnn & cnn.destroy();
+            }
+         });
+      }
+      else{
+         res.status(200).json(emptyArr);
+         cnn & cnn.destroy();
+      }
    }
 });
-
 
 router.post('/', function(req, res) {
    var vld = req.validator;
@@ -87,8 +86,8 @@ router.post('/', function(req, res) {
 
    async.waterfall([
    function(cb) {
-     if (vld.check(body.lastName, Tags.missingField, "lastName", cb))
-        cb(null);
+      if (vld.check(body.lastName, Tags.missingField, "lastName", cb))
+         cb(null);
    },
    function(cb) {
       if (vld.hasFields(body, ["email", "password", "role"], cb) &&
@@ -113,9 +112,7 @@ router.post('/', function(req, res) {
       res.location(router.baseURL + '/' + result.insertId).end();
       cb();
    }],
-   function(err) {
-      if (err)
-        console.log
+   function(err) {  //had error log, removed
       cnn.release();
    });
 });
@@ -138,6 +135,14 @@ router.get('/:id', function(req, res) {
    }
 });
 
+function updateHandler(req, res, err, prsArr){
+  if(err)
+    res.status(400).json(err);
+  else
+    res.status(200).end();
+  req.cnn.release();
+}
+
 router.put('/:id', function(req, res) {
   var vld = req.validator;
   var body = req.body;
@@ -145,84 +150,70 @@ router.put('/:id', function(req, res) {
 
   if (req.session.isAdmin()) {
     req.cnn.query('UPDATE Person set ? where id = ?', [body, Number(req.params.id)],
-     function(err, prsArr) {
-       if (err)
-         res.status(400).json(err);
-       else
-          res.status(200).end();
-       req.cnn.release();
-     });
+     updateHandler(req, res));
   }
   else if (vld.checkPrsOK(Number(req.params.id)) && Object.keys(body).length) {
     async.waterfall([
     function(cb) {
-      if (vld.check(!body.hasOwnProperty('email'), Tags.forbiddenField,
-       "email", cb))
-        cb(null);
+       if (vld.check(!body.hasOwnProperty('email'), Tags.forbiddenField,
+        "email", cb))
+          cb(null);
     },
     function(cb) {
-      if (vld.check(!body.hasOwnProperty('role'), Tags.badValue,
-       "role", cb))
-        cb(null);
+       if (vld.check(!body.hasOwnProperty('role'), Tags.badValue,
+        "role", cb))
+          cb(null);
     },
     function(cb) {
-      if (vld.check(!body.hasOwnProperty('termsAccepted'), Tags.forbiddenField,
-       "termsAccepted", cb))
-        cb(null);
+       if (vld.check(!body.hasOwnProperty('termsAccepted'), Tags.forbiddenField,
+        "termsAccepted", cb))
+          cb(null);
     },
     function(cb) {
-      if (vld.check(!body.hasOwnProperty('whenRegistered'), Tags.forbiddenField,
-       "whenRegistered", cb))
-        cb(null);
+       if (vld.check(!body.hasOwnProperty('whenRegistered'), Tags.forbiddenField,
+        "whenRegistered", cb))
+          cb(null);
     },
     function(cb) {
-      if (body.oldPassword || body.password) {
-       if (vld.chain(body.password.length,
-        Tags.badValue, "password")
-       .check(body.oldPassword, Tags.noOldPwd, "oldPassword", cb))
-        req.cnn.chkQry('select password from Person where id = ?',
-         [Number(req.params.id)], cb);
+       if (body.oldPassword || body.password) {
+          if (vld.chain(body.password.length,
+           Tags.badValue, "password")
+           .check(body.oldPassword, Tags.noOldPwd, "oldPassword", cb))
+             req.cnn.chkQry('select password from Person where id = ?',
+              [Number(req.params.id)], cb);
       }
-      else{
-        cb(null, null, null);
+      else {
+         cb(null, null, null);
       }
     },
     function(existingPrss, fields, cb) {
-      if (existingPrss) {
-        if (vld.check(existingPrss[0].password == JSON.stringify(body.oldPassword),
-         Tags.oldPwdMismatch, null, cb))
-          updateObject.password = body && body.password;
+       if (existingPrss) {
+          if (vld.check(existingPrss[0].password == JSON.stringify(body.oldPassword),
+           Tags.oldPwdMismatch, null, cb))
+             updateObject.password = body && body.password;
       }
       else
-        cb(null);
+         cb(null);
     },
     function(cb) {
-      if (body.firstName)
-        updateObject.firstName = body.firstName;
-      if (body.lastName)
-        updateObject.lastName = body.lastName;
-      req.cnn.query('UPDATE Person set ? where id = ?',
-       [updateObject, Number(req.params.id)],  function(err, prsArr, cb) {
-          if (err)
-             res.status(400).json(err);
-          else
-             res.status(200).end();
-          req.cnn.release();
-        });
+       if (body.firstName)
+          updateObject.firstName = body.firstName;
+       if (body.lastName)
+          updateObject.lastName = body.lastName;
+       req.cnn.query('UPDATE Person set ? where id = ?',
+        [updateObject, Number(req.params.id)], updateHandler(req, res));
     }],
     function(err) {
-      if (err)
-        ;
-      req.cnn && req.cnn.release();
+       req.cnn && req.cnn.release();
     });
   }
   else if (vld.checkPrsOK(Number(req.params.id))) {
-    res.status(200).end();
-    req.cnn.release();
+     res.status(200).end();
+     req.cnn.release();
   }
   else{
-    res && res.status(400).end();
-    req.cnn.release();
+     res && res.status(400).end();
+     req.cnn.release();
   }
 });
 

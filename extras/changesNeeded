@@ -1,0 +1,52 @@
+Your program didn't pass.  Please fix the things mentioned below
+and resubmit the program.  Resubmit all files even if you change only
+a few.
+
+Remove commented out code and console.logs in your code.
+Keep lines under 80 columns, by breaking long lines at a reasonable point
+and indenting the continuation by one space, as described in the style sheet.
+
+Use correct horizontal spacing as specified in the style sheet.  This
+includes spaces around the = in assignment, around the operators in
+expressions, around each keyworkd, after commas in a declaration list, etc.
+For instance:
+
+int test1, test2, test4;
+
+if (test1 < test2+1 && test4*3 + 1 > 0)
+
+is much more readable than:
+
+int test1,test2,test4;
+if(test1<test2+1&&test4*3+1>0)
+
+Though spaces in a line are generally a good thing, there are a few
+places they don't belong.  Don't put spaces before a semicolon, right
+parentheses ) or comma and don't put them after a left parentheses (.
+Such spaces don't help readability, and they are distracting.
+
+Be sure you have a blank space after each keyword, such as if, while, for,
+try, catch, etc.
+
+Read the style sheet for a complete set of rules.
+
+When breaking up long lines of code into multiple lines, indent each line
+after the first exactly one space from the first line.
+
+Good:
+        This is an example
+         of how to properly break
+         a long line of code;
+
+Bad:
+        This is a bad example
+         showing how not to break
+          long lines of code;
+
+Bad:
+        This is another bad example showing
+           how not to break long lines of code;
+
+Your indentation style doesn't always comply with the standard.
+Consistently correct indentation is important, and gives your code
+a professional appearance.  Be sure you always obey the standard.

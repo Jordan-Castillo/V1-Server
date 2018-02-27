@@ -1,14 +1,21 @@
 //Zips the folder
 zip -r V0.zip V0/
+zip -@ CHSV1.zip < fileList
+
+
 
 //push it to the server from campus desktop
 scp /mnt/c/Users/jtcas/Desktop/437/betterV0/V0.zip jtcastil@129.65.128.113:/home/jtcastil/
 
 //push it to unix server
 scp /mnt/c/Users/jtcas/Desktop/437/betterV0/V0/CHSV1.zip jtcastil@unix5.csc.calpoly.edu:/home/jtcastil/
+scp /mnt/c/Users/jtcas/Desktop/437/betterV0/V0.zip jtcastil@unix5.csc.calpoly.edu:/home/jtcastil/
+
 
 // ---> then to class server
 scp //home/jtcastil/CHSV1.zip jtcastil@129.65.128.113:/home/jtcastil/
+scp //home/jtcastil/V0.zip jtcastil@129.65.128.113:/home/jtcastil/
+
 
 
 //must use 5007, dont dick around in 3000

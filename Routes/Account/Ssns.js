@@ -17,8 +17,8 @@ router.get('/', function(req, res) {
       req.cnn.release();
    }
    else {
-     res.status(403).end();
-     req.cnn.release();
+      res.status(403).end();
+      req.cnn.release();
    }
 });
 

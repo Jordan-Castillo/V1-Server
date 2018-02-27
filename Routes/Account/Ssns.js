@@ -14,6 +14,11 @@ router.get('/', function(req, res) {
          body.push({cookie: cookie, prsId: ssn.id, loginTime: ssn.loginTime});
       }
       res.status(200).json(body);
+      req.cnn.release();
+   }
+   else {
+     res.status(403).end();
+     req.cnn.release();
    }
 });
 
@@ -33,24 +38,23 @@ router.post('/', function(req, res) {
 });
 
 router.delete('/:cookie', function(req, res) {
-  console.log("INSIDE ROUTER.DELETE");
-  console.log("req.params.cookie = " + req.params.cookie);
-
-   if(req.validator.check(req.params.cookie === req.cookies[ssnUtil.cookieName],
+   if (req.validator.check(req.params.cookie === req.cookies[ssnUtil.cookieName]
+    || req.session.isAdmin(),
     Tags.noPermission)) {
       ssnUtil.deleteSession(req.params.cookie);
       res.status(200).end();
-      console.log("SESSUIB ");
    }
    req.cnn.release();
 });
 
-router.get('/cookie', function(req, res) {
+router.get('/:cookie', function(req, res) {
    var cookie = req.params.cookie;
    var vld = req.validator;
 
    if (vld.checkPrsOK(ssnUtil.sessions[cookie].id)) {
-      res.json({prsId: req.session.id});
+      res.json({prsId: req.session.id, cookie: req.params.cookie,
+       prsId: ssnUtil.sessions[cookie].id,
+      loginTime: ssnUtil.sessions[cookie].loginTime});
    }
    req.cnn.release();
 });

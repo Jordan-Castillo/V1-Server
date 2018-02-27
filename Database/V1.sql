@@ -5,7 +5,7 @@ create table Person (
    email varchar(30) not null,
    password varchar(50),
    whenRegistered datetime not null,
-   termsAccepted datetime,
+   termsAccepted boolean,
    role int unsigned not null,  # 0 normal, 1 admin
    unique key(email)
 );

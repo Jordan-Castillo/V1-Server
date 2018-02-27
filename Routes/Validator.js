@@ -39,7 +39,7 @@ Validator.Tags = {
 // leaving the caller to cover the "good" case only.
 Validator.prototype.check = function(test, tag, params, cb) {
    if (!test)
-      this.errors.push({tag: tag, params: params});
+      this.errors.push({tag: tag, params: [params]});
   //J: Check if we have found any errors so far
    if (this.errors.length) {
       if (this.res) {
@@ -59,7 +59,7 @@ Validator.prototype.check = function(test, tag, params, cb) {
 // in a row, finalized by a check call.
 Validator.prototype.chain = function(test, tag, params) {
    if (!test) {
-      this.errors.push({tag: tag, params: params});
+      this.errors.push({tag: tag, params: [params]});
    }
    return this;
 };

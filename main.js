@@ -2,15 +2,17 @@ var express = require('express');
 //J: used to simplify file paths, core module indicated by absence of './'
 var path = require('path');
 var cookieParser = require('cookie-parser');
-
 var bodyParser = require('body-parser');
 var Session = require('./Routes/Session.js');
 var Validator = require('./Routes/Validator.js');
 var CnnPool = require('./Routes/CnnPool.js');
-
 var async = require('async');
-
 var app = express();
+
+var argv = process.argv;
+//argv.includes("-p")
+var port = (argv.indexOf("-p") > 0) ? argv[argv.length - 1] : 3000;
+
 //app.use(function(req, res, next) {console.log("Hello"); next();});
 // Static paths to be served like index.html and all client side js
 app.use(express.static(path.join(__dirname, 'public')));
@@ -33,7 +35,7 @@ app.use(Session.router);
 // otherwise respond immediately with 401 and noLogin error tag.
 app.use(function(req, res, next) {
   //J: This just prints the requested path, i.e. localhost:3000/PATH
-   console.log(req.path);
+   console.log(req.path + " -- " + req.method);
   //J: If... the user has a valid session,
   //J: Or... they are POSTing AND the path === 'Prss' or "Ssns"
   //J:    attach validator to request object; req.validator
@@ -42,7 +44,8 @@ app.use(function(req, res, next) {
     (req.path === '/Prss' || req.path === '/Ssns'))) {
       req.validator = new Validator(req, res);
       next();
-   } else
+   }
+   else
       res.status(401).end();
 });
 //J: Sanity Check... What does the validator attached to req obj do?
@@ -58,17 +61,17 @@ app.use(CnnPool.router);
 app.use('/Prss', require('./Routes/Account/Prss.js'));
 app.use('/Ssns', require('./Routes/Account/Ssns.js'));
 app.use('/Cnvs', require('./Routes/Conversation/Cnvs.js'));
-
+app.use('/Msgs', require('./Routes/Conversation/Msgs.js'));
 // Special debugging route for /DB DELETE.  Clears all table contents,
 //resets all auto_increment keys to start at 1, and reinserts one admin user.
 app.delete('/DB', function(req, res) {
   console.log("req.session = " + req.session);
   console.log("req.session.isAdmin = " + req.session.isAdmin());
-  if(!req.session.isAdmin()){
+  if (!req.session.isAdmin()) {
     res.status(403).end();
     req.cnn && req.cnn.release();
   }
-  else{
+  else {
    // Callbacks to clear tables
    var cbs = ["Conversation", "Message", "Person"].map(function(tblName) {
       return function(cb) {
@@ -77,7 +80,7 @@ app.delete('/DB', function(req, res) {
    });
 
    // Callbacks to reset increment bases
-   cbs = cbs.concat(["Conversation", "Message", "Person"].map(function(tblName){
+   cbs = cbs.concat(["Conversation", "Message", "Person"].map(function(tblName) {
       return function(cb) {
          req.cnn.query("alter table " + tblName + " auto_increment = 1", cb);
       };
@@ -91,7 +94,7 @@ app.delete('/DB', function(req, res) {
    });
 
    // Callback to clear sessions, release connection and return result
-   cbs.push(function(callback){
+   cbs.push(function(callback) {
       for (var session in Session.sessions)
          delete Session.sessions[session];
       callback();
@@ -102,37 +105,37 @@ app.delete('/DB', function(req, res) {
       if (err)
          res.status(400).json(err);
       else
-         res.status(200).end();
+         res.status(401).end();
    });
  }
 
    /* Equivalent expanded code for instructional reference
       async.series([
-         function(callback){
+         function(callback) {
             cnn.query('delete from Person`', callback);
          },
-         function(callback){
+         function(callback) {
             cnn.query('delete from Conversation', callback);
          },
-         function(callback){
+         function(callback) {
             cnn.query('delete from Message', callback);
          },
-         function(callback){
+         function(callback) {
             cnn.query('alter table Perrson auto_increment = 1', callback);
          },
-         function(callback){
+         function(callback) {
             cnn.query('alter table Conversation auto_increment = 1', callback);
          },
-         function(callback){
+         function(callback) {
             cnn.query('alter table Message auto_increment = 1', callback);
          },
-         function(callback){
+         function(callback) {
             cnn.query('INSERT INTO Person (firstName, lastName, email,' +
                 ' password, whenRegistered, role) VALUES ' +
                 '("Joe", "Admin", "adm@11.com","password", NOW(), 2);',
              callback);
          },
-         function(callback){
+         function(callback) {
             for (var session in Session.sessions)
                delete Session.sessions[session];
             res.send();
@@ -147,14 +150,15 @@ app.delete('/DB', function(req, res) {
 // Handler of last resort.  Print a stacktrace to console and send a 500 res
 app.use(function(req, res) {
    res.status(404).end();
-   res.cnn.release();
+   req.cnn.release();
 });
-
+/* DO I NEED THIS?
 app.use(function(err, req, res, next) {
    res.status(400).json(err);
    req.cnn && req.cnn.release();
 });
+*/
 
-app.listen(3000, function () {
-   console.log('App Listening on port 3000');
+app.listen(port, function () {
+   console.log('App Listening on port ' + port);
 });

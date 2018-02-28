@@ -4,42 +4,34 @@ var router = Express.Router({caseSensitive: true});
 var async = require('async');
 
 router.baseURL = '/Cnvs';
-//only returns OBJECT holding 1 Conversation
-//NOT an array holding 1 object
-router.get('/:cnvId', function(req, res) {
-  var vld = req.validator;
 
-  if (vld.check(req.session, Tags.noLogin, null)) {
-    req.cnn.chkQry('select * from Conversation where id = ?',
-     [req.params.cnvId], function(err, cnvsArr, fields) {
-       if (err)
-          console.log(err);
-       if (cnvsArr)
-          console.log(cnvsArr);
-       if (fields)
-          console.log(fields);
-       //was failing 2/23 due to immediate .length call, changed that very same morning
-       if (vld.check(!err && cnvsArr && cnvsArr.length, Tags.notFound, null))
-         res.json(cnvsArr[0]);
-       req.cnn.release();
-     });
-  }
+router.get('/:cnvId', function(req, res) {
+   var vld = req.validator;
+
+   if (vld.check(req.session, Tags.noLogin, null)) {
+      req.cnn.chkQry('select * from Conversation where id = ?',
+       [req.params.cnvId], function(err, cnvsArr, fields) {
+         if (vld.check(!err && cnvsArr && cnvsArr.length, Tags.notFound, null))
+            res.json(cnvsArr[0]);
+         req.cnn.release();
+      });
+   }
 });
 
 router.get('/', function(req, res) {
-  var vld = req.validator;
+   var vld = req.validator;
 
-  if (vld.check(req.session, Tags.noLogin, null)) {
-    req.cnn.chkQry('select * from Conversation', null,
-     function(err, cnvs) {;
-        if (!err) {
-          cnvs.forEach(function(cnvn) {
-            cnvn.lastMessage = cnvn.lastMessage ?
-             cnvn.lastMessage.getTime() : null;
-          })
+   if (vld.check(req.session, Tags.noLogin, null)) {
+      req.cnn.chkQry('select * from Conversation', null,
+      function(err, cnvs) {
+         if (!err) {
+            cnvs.forEach(function(cnvn) {
+               cnvn.lastMessage = cnvn.lastMessage ?
+                cnvn.lastMessage.getTime() : null;
+            })
            res.json(cnvs);
          }
-        req.cnn.release();
+         req.cnn.release();
       });
   }
   else {

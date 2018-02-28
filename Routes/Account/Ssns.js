@@ -38,10 +38,12 @@ router.post('/', function(req, res) {
 });
 
 router.delete('/:cookie', function(req, res) {
-   if (req.validator.check(req.params.cookie === req.cookies[ssnUtil.cookieName]
+  var params = req.params;
+
+   if (req.validator.check(params.cookie === req.cookies[ssnUtil.cookieName]
     || req.session.isAdmin(),
     Tags.noPermission)) {
-      ssnUtil.deleteSession(req.params.cookie);
+      ssnUtil.deleteSession(params.cookie);
       res.status(200).end();
    }
    req.cnn.release();
@@ -54,7 +56,7 @@ router.get('/:cookie', function(req, res) {
    if (vld.checkPrsOK(ssnUtil.sessions[cookie].id)) {
       res.json({prsId: req.session.id, cookie: req.params.cookie,
        prsId: ssnUtil.sessions[cookie].id,
-      loginTime: ssnUtil.sessions[cookie].loginTime});
+       loginTime: ssnUtil.sessions[cookie].loginTime});
    }
    req.cnn.release();
 });

@@ -13,46 +13,46 @@ router.get('/', function(req, res) {
    var cnn = req.cnn;
 
    if (isUserAdmin) {
-     if (email) {
-       cnn.query('select email from Person',
-       function(err, result) {
-         if (err) {
-           cnn.destroy();
-           res.status(500).json("Failed query");
-         }
-         else{
-            for (var x = 0; x < result.length; x++) {
-               if (result[x].email.indexOf(email) >= 0)
-                  email = result[x].email;
+      if (email) {
+         cnn.query('select email from Person',
+         function(err, result) {
+            if (err) {
+               cnn.destroy();
+               res.status(500).json("Failed query");
             }
-            cnn.query('select id, email from Person where email LIKE ?',
-             [email], function(err, result) {
-               if (err) {
-                  cnn.destroy();
-                  res.status(500).json("Failed query");
+            else {
+               for (var x = 0; x < result.length; x++) {
+                  if (result[x].email.indexOf(email) >= 0)
+                     email = result[x].email;
                }
-               else{
-                  res.status(200).json(result);
-                  cnn & cnn.destroy();
-               }
-            });
-         }
-       });
-     }
-     else{
-        cnn.query('select id, email from Person', function(err, result) {
-         if (err) {
-           cnn.destroy();
-           res.status(500).json("Failed query");
-         }
-         else{
-            res.status(200).json(result);
-            cnn & cnn.destroy();
-         }
-       });
-     }
+               cnn.query('select id, email from Person where email LIKE ?',
+                [email], function(err, result) {
+                  if (err) {
+                     cnn.destroy();
+                     res.status(500).json("Failed query");
+                  }
+                  else {
+                     res.status(200).json(result);
+                     cnn & cnn.destroy();
+                  }
+               });
+            }
+         });
+      }
+      else {
+         cnn.query('select id, email from Person', function(err, result) {
+            if (err) {
+               cnn.destroy();
+               res.status(500).json("Failed query");
+            }
+            else {
+               res.status(200).json(result);
+               cnn & cnn.destroy();
+            }
+         });
+      }
    }
-   else{
+   else {
       if (email && req.session.email.indexOf(email) === 0) {
          email = req.session.email;
          cnn.query('select id, email from Person where email LIKE ?', [email],
@@ -67,7 +67,7 @@ router.get('/', function(req, res) {
             }
          });
       }
-      else{
+      else {
          res.status(200).json(emptyArr);
          cnn & cnn.destroy();
       }
@@ -102,7 +102,7 @@ router.post('/', function(req, res) {
          cnn.chkQry('select * from Person where email = ?', body.email, cb);
       }
    },
-   function(existingPrss, fields, cb) {  // If no duplicates, insert new Person
+   function(existingPrss, fields, cb) { //If no duplicates, insert new Person
       if (vld.check(!existingPrss.length, Tags.dupEmail, null, cb)) {
          body.termsAccepted = body.termsAccepted ? true : false;
          cnn.chkQry('insert into Person set ?', body, cb);
@@ -135,8 +135,8 @@ router.get('/:id', function(req, res) {
    }
 });
 
-function updateHandler(req, res, err, prsArr){
-  if(err)
+function updateHandler(req, res, err, prsArr) {
+  if (err)
     res.status(400).json(err);
   else
     res.status(200).end();
@@ -149,8 +149,8 @@ router.put('/:id', function(req, res) {
   var updateObject = new Object();
 
   if (req.session.isAdmin()) {
-    req.cnn.query('UPDATE Person set ? where id = ?', [body, Number(req.params.id)],
-     updateHandler(req, res));
+    req.cnn.query('UPDATE Person set ? where id = ?',
+     [body, Number(req.params.id)], updateHandler(req, res));
   }
   else if (vld.checkPrsOK(Number(req.params.id)) && Object.keys(body).length) {
     async.waterfall([
@@ -165,13 +165,13 @@ router.put('/:id', function(req, res) {
           cb(null);
     },
     function(cb) {
-       if (vld.check(!body.hasOwnProperty('termsAccepted'), Tags.forbiddenField,
-        "termsAccepted", cb))
+       if (vld.check(!body.hasOwnProperty('termsAccepted'),
+        Tags.forbiddenField, "termsAccepted", cb))
           cb(null);
     },
     function(cb) {
-       if (vld.check(!body.hasOwnProperty('whenRegistered'), Tags.forbiddenField,
-        "whenRegistered", cb))
+       if (vld.check(!body.hasOwnProperty('whenRegistered'),
+        Tags.forbiddenField, "whenRegistered", cb))
           cb(null);
     },
     function(cb) {
@@ -188,7 +188,8 @@ router.put('/:id', function(req, res) {
     },
     function(existingPrss, fields, cb) {
        if (existingPrss) {
-          if (vld.check(existingPrss[0].password == JSON.stringify(body.oldPassword),
+          if (vld.check(existingPrss[0].password ===
+           JSON.stringify(body.oldPassword),
            Tags.oldPwdMismatch, null, cb))
              updateObject.password = body && body.password;
       }
@@ -211,7 +212,7 @@ router.put('/:id', function(req, res) {
      res.status(200).end();
      req.cnn.release();
   }
-  else{
+  else {
      res && res.status(400).end();
      req.cnn.release();
   }

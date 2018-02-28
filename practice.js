@@ -1,6 +1,7 @@
 /*
 
 NOT WORKING, JUST PRACTICING WRITING A SHORTER REPLACEMENT
+*/
 
 router.put('/:id', function(req, res) {
   var vld = req.validator;
@@ -31,7 +32,27 @@ router.put('/:id', function(req, res) {
 
 function passwordHandler(req, res, body, cb){
     var vld = req.validator;
-
-
 }
-*/
+
+//BEGINNING OF router.get(...)  ~*~*~*~*~**~*~*~*~*~~*~*~*
+
+router.get('/', function(req, res) {
+   var isUserAdmin = req.session.isAdmin();
+   var email = req.query.email;
+   var emptyArr = [];
+   var cnn = req.cnn;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-

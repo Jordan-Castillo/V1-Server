@@ -25,18 +25,19 @@ router.get('/', function(req, res) {
       req.cnn.chkQry('select * from Conversation', null,
       function(err, cnvs) {
          if (!err) {
-            cnvs.forEach(function(cnvn) {
+            cnvs.forEach(
+            function(cnvn) {
                cnvn.lastMessage = cnvn.lastMessage ?
                 cnvn.lastMessage.getTime() : null;
             })
-           res.json(cnvs);
+            res.json(cnvs);
          }
          req.cnn.release();
       });
-  }
-  else {
+   }
+   else {
      req.cnn.release();
-  }
+   }
 });
 
 router.post('/', function(req, res) {
@@ -46,28 +47,31 @@ router.post('/', function(req, res) {
 
    async.waterfall([
    function(cb) {
-     if (vld.check(Object.keys(body).length, Tags.missingField, "title", cb))
+      if (vld.check(Object.keys(body).length, Tags.missingField, "title", cb))
+         cb(null);
+   },
+   function(cb) {
+      for (var parameter in body) {
+         vld.check(parameter && parameter.length > 0,
+          Tags.missingField, "content", cb)
+      }
       cb(null);
    },
    function(cb) {
-       for (var parameter in body) {
-       vld.check(parameter && parameter.length > 0, Tags.missingField, "content", cb)
-     }
-     cb(null);
+      if (vld.chain(body.title
+       && body.title.length < 80, Tags.badValue, "title")
+       .check(body.title.length > 0, Tags.missingField, "title", cb))
+         cb(null);
    },
    function(cb) {
-     if (vld.chain(body.title && body.title.length < 80, Tags.badValue, "title")
-      .check(body.title.length > 0, Tags.missingField, "title", cb))
-      cb(null);
-   },
-   function(cb) {
-      cnn.chkQry('select * from Conversation where title = ?', body.title, cb);
+      cnn.chkQry('select * from Conversation where title = ?',
+       body.title, cb);
    },
    function(existingCnv, fields, cb) {
       if (vld.check(!existingCnv.length, Tags.dupTitle, null, cb)) {
          body.ownerId = req.session.id;
          cnn.chkQry("insert into Conversation set ?", body, cb);
-       }
+      }
    },
    function(insRes, fields, cb) {
       res.location(router.baseURL + '/' + insRes.insertId).end();
@@ -86,10 +90,10 @@ router.put('/:cnvId', function(req, res) {
 
    async.waterfall([
    function(cb) {
-     if (vld.chain(body.title && body.title.length, Tags.badValue, "title")
-        .chain(body.title && body.title.length < 80, Tags.badValue, "title")
-        .check(Object.keys(body).length), Tags.missingField, null, cb)
-        cb(null);
+      if (vld.chain(body.title && body.title.length, Tags.badValue, "title")
+       .chain(body.title && body.title.length < 80, Tags.badValue, "title")
+       .check(Object.keys(body).length), Tags.missingField, null, cb)
+         cb(null);
    },
    function(cb) {
       cnn.chkQry('select * from Conversation where id = ?', [cnvId], cb);
@@ -107,8 +111,8 @@ router.put('/:cnvId', function(req, res) {
 
    },
    function(err, result, cb) {
-     res.status(200).end();
-     cb(err);
+      res.status(200).end();
+      cb(err);
    }],
    function(err) {
       if (err)
@@ -132,26 +136,24 @@ router.delete('/:cnvId', function(req, res) {
          cb(null);
    },
    function(cb) {
-     cnn.chkQry('delete from Message where cnvId = ?', [cnvId],
+      cnn.chkQry('delete from Message where cnvId = ?', [cnvId],
       function(err, result) {
-        cb(null);
+         cb(null);
       });
    },
    function(cb) {
-     cnn.chkQry('delete from Conversation where id = ?', [cnvId],
+      cnn.chkQry('delete from Conversation where id = ?', [cnvId],
       function(err, result) {
-        if (!err || vld.check(result.affectedRows, Tags.notFound))
-           res.status(200).end();
-        cb(err)
-     });
+         if (!err || vld.check(result.affectedRows, Tags.notFound))
+            res.status(200).end();
+         cb(err)
+      });
    }],
-   function(err) {
-      if (err) {
-        console.log(err);
-        res.status(400);
-      }
+   function(err) { //was printing err previosly here
+      if (err)
+         res.status(400);
       cnn.release();
-    });
+   });
 });
 
 router.get('/:cnvId/Msgs', function(req, res) {
@@ -159,7 +161,8 @@ router.get('/:cnvId/Msgs', function(req, res) {
    var cnvId = req.params.cnvId;
    var cnn = req.cnn;
    var query = 'select whenMade, email, content from Conversation c' +
-    ' join Message m on m.cnvId = c.id join Person p on m.prsId = p.id where c.id = ?' +
+    ' join Message m on m.cnvId = c.id ' +
+    'join Person p on m.prsId = p.id where c.id = ?' +
     ' order by m.id ASC';
    var params = [cnvId];
 
@@ -174,27 +177,26 @@ router.get('/:cnvId/Msgs', function(req, res) {
    },
    function(cnvs, fields, cb) { // Get indicated messages
       if (vld.check(cnvs.length, Tags.notFound, null, cb)) {
-        if (req.query.num)
-          cnn.chkQry(query, [cnvId, Number(req.query.num)], cb);
-        else
-          cnn.chkQry(query, params, cb);
-       }
+         if (req.query.num)
+            cnn.chkQry(query, [cnvId, Number(req.query.num)], cb);
+         else
+            cnn.chkQry(query, params, cb);
+      }
    },
    function(msgs, fields, cb) { // Return retrieved messages
-      msgs.forEach(function(mssg) { //convert whenMade from
-        mssg.whenMade = mssg.whenMade ?
-         mssg.whenMade.getTime() : null;
+      msgs.forEach(
+      function(mssg) { //convert whenMade to epoch time in ms
+         mssg.whenMade = mssg.whenMade ?
+          mssg.whenMade.getTime() : null;
       });
       if (req.query.dateTime)
-        msgs = msgs.filter(function(mssg) {
-          return mssg.whenMade < req.query.dateTime;
-        });
+         msgs = msgs.filter(function(mssg) {
+            return mssg.whenMade < req.query.dateTime;
+         });
       res.json(msgs);
       cb(null);
    }],
-   function(err) {
-      if (err)
-        console.log(err)
+   function(err) { //previously printed error here
       cnn.release();
    });
 });
@@ -208,14 +210,15 @@ router.post('/:cnvId/Msgs', function(req, res) {
 
    async.waterfall([//first check for members of objects
    function(cb) {
-     if (vld.check(Object.keys(body).length, Tags.missingField, "content", cb))
-      cb(null);
+      if (vld.check(Object.keys(body).length,
+       Tags.missingField, "content", cb))
+         cb(null);
    },
    function(cb) {
-     if (vld.check(body.hasOwnProperty("content") && body.content !== null &&
-      body.content.length < 5000,
-      Tags.missingField, "content", cb))
-      cb(null);
+      if (vld.check(body.hasOwnProperty("content") && body.content !== null &&
+       body.content.length < 5000,
+       Tags.missingField, "content", cb))
+         cb(null);
    },
    function(cb) {
       cnn.chkQry('select * from Conversation where id = ?', [cnvId], cb);

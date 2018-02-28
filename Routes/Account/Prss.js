@@ -102,7 +102,7 @@ router.post('/', function(req, res) {
          cnn.chkQry('select * from Person where email = ?', body.email, cb);
       }
    },
-   function(existingPrss, fields, cb) { //If no duplicates, insert new Person
+   function(existingPrss, fields, cb) {
       if (vld.check(!existingPrss.length, Tags.dupEmail, null, cb)) {
          body.termsAccepted = body.termsAccepted ? true : false;
          cnn.chkQry('insert into Person set ?', body, cb);
@@ -152,7 +152,8 @@ router.put('/:id', function(req, res) {
     req.cnn.query('UPDATE Person set ? where id = ?',
      [body, Number(req.params.id)], updateHandler(req, res));
   }
-  else if (vld.checkPrsOK(Number(req.params.id)) && Object.keys(body).length) {
+  else if (vld.checkPrsOK(Number(req.params.id))
+   && Object.keys(body).length) {
     async.waterfall([
     function(cb) {
        if (vld.check(!body.hasOwnProperty('email'), Tags.forbiddenField,
